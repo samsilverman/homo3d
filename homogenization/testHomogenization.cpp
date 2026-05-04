@@ -11,10 +11,23 @@
 #include <filesystem>
 #include <string>
 #include <regex>
+#include <iomanip>
 
 using namespace homo;
 
 extern void cudaTest(void);
+
+void writeTensorCsv(const std::string& filename, const double Ch[6][6]) {
+	std::ofstream ofs(filename);
+	ofs << std::fixed << std::setprecision(4);
+	for (int i = 0; i < 6; ++i) {
+		for (int j = 0; j < 6; ++j) {
+			if (j != 0) ofs << ",";
+			ofs << Ch[i][j];
+		}
+		ofs << "\n";
+	}
+}
 
 int findElement(Grid& grid) {
 	auto eflags = grid.getCellflags();
@@ -248,19 +261,23 @@ void testHomogenization(cfg::HomoConfig config) {
 			//hom.getGrid()->reset_density(1);
 			//hom.getGrid()->readDensity(getPath("initrho"), VoxelIOFormat::openVDB);
 			hom.getGrid()->randDensity();
+			hom.getGrid()->projectDensity(20, 0.5);
 		} else {
 			hom.getGrid()->readDensity(config.inputrho, VoxelIOFormat::openVDB);
 		}
-		hom.getGrid()->projectDensity(20, 0.5);
 		hom.getGrid()->writeDensity(getPath("projrho"), VoxelIOFormat::openVDB);
+		auto begin_time = tictoc::getTag();
 		hom.mg_->updateStencils();
 		double Ch[6][6];
 		hom.elasticMatrix(Ch);
+		auto end_time = tictoc::getTag();
+		printf("Time: %.2f ms\n", tictoc::Duration<tictoc::ms>(begin_time, end_time));
 		printf("Ch = \n");
 		for (int i = 0; i < 6; i++) {
 			printf(" %6.4le  %6.4le  %6.4le  %6.4le  %6.4le  %6.4le\n",
 				Ch[i][0], Ch[i][1], Ch[i][2], Ch[i][3], Ch[i][4], Ch[i][5]);
 		}
+		writeTensorCsv(getPath("Ch.csv"), Ch);
 #if 0
 		double oldCh[6][6];
 		for (int i = 0; i < 6; i++) {
