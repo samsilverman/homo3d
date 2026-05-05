@@ -1,7 +1,29 @@
 #include "homogenization/Framework.cuh"
+#include "homogenization/tictoc.h"
+#include <iomanip>
 
 using namespace homo;
 using namespace culib;
+
+void writeTensorCsv(const std::string& filename, const float* Ch) {
+	std::ofstream ofs(filename);
+	ofs << std::fixed << std::setprecision(4);
+	for (int i = 0; i < 6; ++i) {
+		for (int j = 0; j < 6; ++j) {
+			if (j != 0) ofs << ",";
+			ofs << Ch[i * 6 + j];
+		}
+		ofs << "\n";
+	}
+}
+
+template<typename CH>
+void finalizeInverseRun(int nIter, float totalTimeMs, TensorVar<>& rho, CH& Ch) {
+	printf("Iterations: %d\n", nIter);
+	printf("Time: %.2f ms\n", totalTimeMs);
+	writeTensorCsv(getPath("Ch.csv"), Ch.data());
+	rho.value().toVdb(getPath("rho.vdb"));
+}
 
 
 template<typename CH>
@@ -171,6 +193,8 @@ void example_opti_bulk(cfg::HomoConfig config) {
 	std::vector<double> objlist;
 	// convergence criteria
 	ConvergeChecker criteria(config.finthres);
+	int nIter = 0;
+	auto begin_time = tictoc::getTag();
 	// main loop of optimization
 	for (int iter = 0; iter < config.max_iter; iter++) {
 		// abort when cuda error occurs
@@ -182,6 +206,7 @@ void example_opti_bulk(cfg::HomoConfig config) {
 		objective.backward(1);
 		// output to screen
 		printf("\033[32m\n * Iter %d   obj = %.4e\033[0m\n", iter, val);
+		nIter = iter + 1;
 		// check convergence
 		if (criteria.is_converge(iter, val)) { printf("= converged\n"); break; }
 		// make sensitivity symmetry
@@ -198,6 +223,8 @@ void example_opti_bulk(cfg::HomoConfig config) {
 		// output temp results
 		logIter(iter, config, rho, Ch, val);
 	}
+	auto end_time = tictoc::getTag();
+	finalizeInverseRun(nIter, tictoc::Duration<tictoc::ms>(begin_time, end_time), rho, Ch);
 	//rhop.value().toMatlab("rhofinal");
 	hom.grid->writeDensity(getPath("density"), VoxelIOFormat::openVDB);
 	hom.grid->array2matlab("objlist", objlist.data(), objlist.size());
@@ -234,6 +261,8 @@ void example_opti_npr(cfg::HomoConfig config) {
 	std::vector<double> objlist;
 	// convergence criteria
 	ConvergeChecker criteria(config.finthres);
+	int nIter = 0;
+	auto begin_time = tictoc::getTag();
 	// main loop of optimization
 	for (int iter = 0; iter < config.max_iter; iter++) {
 		// abort when cuda error occurs
@@ -248,6 +277,7 @@ void example_opti_npr(cfg::HomoConfig config) {
 		objective.backward(1);
 		// output to screen
 		printf("\033[32m\n * Iter %d   obj = %.4e\033[0m\n", iter, val);
+		nIter = iter + 1;
 		// check convergence
 		if (criteria.is_converge(iter, val)) { printf("= converged\n"); break; }
 		// make sensitivity symmetry
@@ -263,6 +293,8 @@ void example_opti_npr(cfg::HomoConfig config) {
 		// output temp results
 		logIter(iter, config, rho, Ch, val);
 	}
+	auto end_time = tictoc::getTag();
+	finalizeInverseRun(nIter, tictoc::Duration<tictoc::ms>(begin_time, end_time), rho, Ch);
 	//rhop.value().toMatlab("rhofinal");
 	hom.grid->writeDensity(getPath("density"), VoxelIOFormat::openVDB);
 	hom.grid->array2matlab("objlist", objlist.data(), objlist.size());
@@ -297,6 +329,8 @@ void example_opti_shear_isotropy(cfg::HomoConfig config) {
 	std::vector<double> objlist;
 	// convergence criteria
 	ConvergeChecker criteria(config.finthres);
+	int nIter = 0;
+	auto begin_time = tictoc::getTag();
 	// main loop of optimization
 	for (int iter = 0; iter < config.max_iter; iter++) {
 		// define objective expression
@@ -310,6 +344,7 @@ void example_opti_shear_isotropy(cfg::HomoConfig config) {
 		objective.backward(1);
 		// output to screen
 		printf("\033[32m\n * Iter %d   obj = %.4e\033[0m\n", iter, val);
+		nIter = iter + 1;
 		// check convergence
 		if (criteria.is_converge(iter, val)) { printf("= converged\n"); break; }
 		// make sensitivity symmetry
@@ -345,6 +380,8 @@ void example_opti_shear_isotropy(cfg::HomoConfig config) {
 		// output temp results
 		logIter(iter, config, rho, Ch, val);
 	}
+	auto end_time = tictoc::getTag();
+	finalizeInverseRun(nIter, tictoc::Duration<tictoc::ms>(begin_time, end_time), rho, Ch);
 	//rhop.value().toMatlab("rhofinal");
 	hom.grid->writeDensity(getPath("density"), VoxelIOFormat::openVDB);
 	hom.grid->array2matlab("objlist", objlist.data(), objlist.size());
