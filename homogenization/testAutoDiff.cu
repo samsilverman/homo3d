@@ -71,6 +71,27 @@ void logIter(int iter, cfg::HomoConfig config, var_tsexp_t<>& rho, Tensor<Scalar
 	}
 }
 
+template<typename Scalar>
+void writeTensorCsvFlat(const std::string& filename, const Scalar* Ch) {
+	std::ofstream ofs(filename);
+	ofs << std::fixed << std::setprecision(4);
+	for (int i = 0; i < 6; ++i) {
+		for (int j = 0; j < 6; ++j) {
+			if (j != 0) ofs << ",";
+			ofs << Ch[i * 6 + j];
+		}
+		ofs << "\n";
+	}
+}
+
+template<typename Scalar, typename RhoPhys>
+void finalizeInverseRun(int nIter, float totalTimeMs, var_tsexp_t<>& rho, elastic_tensor_t<Scalar, RhoPhys>& Ch) {
+	printf("Iterations: %d\n", nIter);
+	printf("Time: %.2f ms\n", totalTimeMs);
+	writeTensorCsvFlat(getPath("Ch.csv"), Ch.data());
+	rho.value().toVdb(getPath("finalRho.vdb"));
+}
+
 void test_OC(void) {
 	int reso = 64;
 	// define density expression
@@ -292,6 +313,8 @@ void optiBulk(cfg::HomoConfig config, var_tsexp_t<>& rho, Homogenization& hom, e
 	std::vector<double> objlist;
 	// convergence criteria
 	ConvergeChecker criteria(config.finthres);
+	int nIter = 0;
+	auto begin_time = tictoc::getTag();
 	// main loop of optimization
 	for (int iter = 0; iter < config.max_iter; iter++) {
 		// abort when cuda error occurs
@@ -303,6 +326,7 @@ void optiBulk(cfg::HomoConfig config, var_tsexp_t<>& rho, Homogenization& hom, e
 		objective.backward(1);
 		// output to screen
 		printf("\033[32m\n * Iter %d   obj = %.4e\033[0m\n", iter, val);
+		nIter = iter + 1;
 		// check convergence
 		if (criteria.is_converge(iter, val)) { printf("= converged\n"); break; }
 		// make sensitivity symmetry
@@ -323,6 +347,8 @@ void optiBulk(cfg::HomoConfig config, var_tsexp_t<>& rho, Homogenization& hom, e
 		// output temp results
 		logIter(iter, config, rho, sens, Ch, val);
 	}
+	auto end_time = tictoc::getTag();
+	finalizeInverseRun(nIter, tictoc::Duration<tictoc::ms>(begin_time, end_time), rho, Ch);
 	//rhop.value().toMatlab("rhofinal");
 	hom.grid->writeDensity(getPath("density"), VoxelIOFormat::openVDB);
 	hom.grid->array2matlab("objlist", objlist.data(), objlist.size());
@@ -343,6 +369,8 @@ void optiShear(cfg::HomoConfig config, var_tsexp_t<>& rho, Homogenization& hom, 
 	std::vector<double> objlist;
 	// convergence criteria
 	ConvergeChecker criteria(config.finthres);
+	int nIter = 0;
+	auto begin_time = tictoc::getTag();
 	// main loop of optimization
 	for (int iter = 0; iter < config.max_iter; iter++) {
 		// abort when cuda error occurs
@@ -354,6 +382,7 @@ void optiShear(cfg::HomoConfig config, var_tsexp_t<>& rho, Homogenization& hom, 
 		objective.backward(1);
 		// output to screen
 		printf("\033[32m\n * Iter %d   obj = %.4e\033[0m\n", iter, val);
+		nIter = iter + 1;
 		// check convergence
 		if (criteria.is_converge(iter, val)) { printf("= converged\n"); break; }
 		// make sensitivity symmetry
@@ -372,6 +401,8 @@ void optiShear(cfg::HomoConfig config, var_tsexp_t<>& rho, Homogenization& hom, 
 		// output temp results
 		logIter(iter, config, rho, sens, Ch, val);
 	}
+	auto end_time = tictoc::getTag();
+	finalizeInverseRun(nIter, tictoc::Duration<tictoc::ms>(begin_time, end_time), rho, Ch);
 	//rhop.value().toMatlab("rhofinal");
 	hom.grid->writeDensity(getPath("density"), VoxelIOFormat::openVDB);
 	hom.grid->array2matlab("objlist", objlist.data(), objlist.size());
@@ -390,6 +421,8 @@ void optiNpr(cfg::HomoConfig config, var_tsexp_t<>& rho, Homogenization& hom, el
 	std::vector<double> objlist;
 	// convergence criteria
 	ConvergeChecker criteria(config.finthres);
+	int nIter = 0;
+	auto begin_time = tictoc::getTag();
 	// main loop of optimization
 	for (int iter = 0; iter < config.max_iter; iter++) {
 		// abort when cuda error occurs
@@ -416,6 +449,7 @@ void optiNpr(cfg::HomoConfig config, var_tsexp_t<>& rho, Homogenization& hom, el
 		objective.backward(1);
 		// output to screen
 		printf("\033[32m\n * Iter %d   obj = %.4e\033[0m\n", iter, val);
+		nIter = iter + 1;
 		// check convergence
 		if (criteria.is_converge(iter, val)) { printf("= converged\n"); break; }
 		// make sensitivity symmetry
@@ -434,6 +468,8 @@ void optiNpr(cfg::HomoConfig config, var_tsexp_t<>& rho, Homogenization& hom, el
 		// output temp results
 		logIter(iter, config, rho, sens, Ch, val);
 	}
+	auto end_time = tictoc::getTag();
+	finalizeInverseRun(nIter, tictoc::Duration<tictoc::ms>(begin_time, end_time), rho, Ch);
 	//rhop.value().toMatlab("rhofinal");
 	hom.grid->writeDensity(getPath("density"), VoxelIOFormat::openVDB);
 	hom.grid->array2matlab("objlist", objlist.data(), objlist.size());
