@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
         mean /= static_cast<double>(rho.size());
 
         std::cout << "Wrote VDB: " << argv[2] << "\n";
-        std::cout << "Resolution: " << reso[0] << "x" << reso[1] << "x" << reso[2] << "\n";
+        std::cout << "Resolution: " << res[0] << "x" << res[1] << "x" << res[2] << "\n";
         std::cout << "Min density: " << *min_it << "\n";
         std::cout << "Max density: " << *max_it << "\n";
         std::cout << "Average density: " << mean << "\n";
