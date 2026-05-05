@@ -45,13 +45,13 @@ std::vector<float> readDensityBin(const std::string& path, int res[3]) {
 
 int main(int argc, char** argv) {
     if (argc != 3) {
-        std::cerr << "Usage: density_to_vdb <input.bin> <output.vdb>\n";
+        std::cerr << "Usage: save_density_vdb /path/to/input.bin /path/to/output.vdb\n";
         return 1;
     }
 
     try {
         int res[3] = {0, 0, 0};
-        std::vector<float> rho = readDensityBin(argv[1], res);
+        const std::vector<float> rho = readDensityBin(argv[1], res);
 
         openvdb_wrapper_t<float>::lexicalGrid2openVDBfile(argv[2], res, rho);
 
@@ -68,11 +68,13 @@ int main(int argc, char** argv) {
         std::cout << "Min density: " << *min_it << "\n";
         std::cout << "Max density: " << *max_it << "\n";
         std::cout << "Average density: " << mean << "\n";
-    } catch (const std::exception& e) {
-        std::cerr << "density_to_vdb failed: " << e.what() << "\n";
+    }
+    catch (const std::exception& e) {
+        std::cerr << "save_density_vdb failed: " << e.what() << "\n";
         return 1;
-    } catch (...) {
-        std::cerr << "density_to_vdb failed with an unknown error\n";
+    }
+    catch (...) {
+        std::cerr << "save_density_vdb failed with an unknown error\n";
         return 1;
     }
 

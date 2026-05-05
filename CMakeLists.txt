@@ -152,11 +152,20 @@ target_link_libraries(homo3d PRIVATE ${GFLAGS_LIBRARIES})
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(homo3d PRIVATE stdc++fs)
 endif()
+
 add_executable(save_density_vdb save_density_vdb.cpp voxelIO/openvdb_wrapper_t.cpp)
+add_executable(save_density_stl save_density_stl.cpp voxelIO/openvdb_wrapper_t.cpp)
+
 target_include_directories(save_density_vdb PUBLIC ${openvdb_SOURCE_DIR}/openvdb/openvdb)
+target_include_directories(save_density_stl PUBLIC ${openvdb_SOURCE_DIR}/openvdb/openvdb)
+
 target_link_libraries(save_density_vdb PRIVATE openvdb_shared)
+target_link_libraries(save_density_stl PRIVATE openvdb_shared)
+
 if(TARGET glm::glm)
 target_link_libraries(save_density_vdb PRIVATE glm::glm)
+target_link_libraries(save_density_stl PRIVATE glm::glm)
 else()
 target_link_libraries(save_density_vdb PRIVATE glm)
+target_link_libraries(save_density_stl PRIVATE glm)
 endif()
