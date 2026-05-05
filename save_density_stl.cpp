@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
         std::vector<glm::vec<3, int>> tris;
         std::vector<glm::vec<4, int>> quads;
 
-        openvdb_wrapper_t<float>::meshFromFile(inputPath, points, tris, quads, isoValue, true);
+        openvdb_wrapper_t<float>::meshFromFile(inputPath, points, tris, quads, isoValue, false);
 
         if (points.empty() || (tris.empty() && quads.empty())) {
             throw std::runtime_error("No mesh triangles or quads were generated from the VDB file.");
@@ -126,12 +126,13 @@ int main(int argc, char** argv) {
         std::vector<std::array<int, 3>> triangles;
         triangles.reserve(tris.size() + quads.size() * 2);
 
+        // Counterclockwise vertex ordering for outward facing normals
         for (const auto& tri : tris) {
-            triangles.push_back({tri.x, tri.y, tri.z});
+            triangles.push_back({tri.x, tri.z, tri.y});
         }
         for (const auto& quad : quads) {
-            triangles.push_back({quad.x, quad.y, quad.z});
-            triangles.push_back({quad.x, quad.z, quad.w});
+            triangles.push_back({quad.x, quad.z, quad.y});
+            triangles.push_back({quad.x, quad.w, quad.z});
         }
 
         writeBinarySTL(outputPath, vertices, triangles);

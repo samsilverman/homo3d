@@ -52,17 +52,16 @@ def main() -> None:
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
-    nx, ny, nz = rho.shape
     path = args.out_dir.resolve() / 'rho.bin'
 
     with open(file=path, mode='wb') as f:
         # Write header containing field dimensions
-        header = np.array([nx, ny, nz], dtype=np.int32)
-        header.tofile(fid=f)
+        header = np.array([args.res, args.res, args.res], dtype=np.int32)
+        header.tofile(file=f)
 
         # Write field data
-        body = rho.ravel(order='C').astype(np.float32)
-        body.tofile(fid=f)
+        body = rho.astype(np.float32)
+        body.tofile(file=f)
 
     if args.save_npy:
         np.save(path.with_suffix('.npy'), rho)
@@ -74,7 +73,7 @@ def main() -> None:
     print(f'Average density: {rho.mean():.6f}')
     print('')
     print('Next step: Convert to VDB with the C++ tool:')
-    print(f"./density_to_vdb {path} {path.with_suffix('.vdb')}")
+    print(f"./save_density_vdb {path} {path.with_suffix('.vdb')}")
 
 
 if __name__ == "__main__":
