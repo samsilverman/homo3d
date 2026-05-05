@@ -21,7 +21,7 @@ namespace homo {
 	//}
 
 	template<typename T, typename Tview>
-	void tensor_rand(Tview dataview, T low, T upp) {
+	void tensor_rand(Tview dataview, T low, T upp, long long seed = -1) {
 		//curandState* randstates;
 		//// malloc states
 		//cudaMalloc(&randstates, sizeof(curandState) * dataview.size());
@@ -30,7 +30,7 @@ namespace homo {
 		//cudaFree(randstates);
 		T* randarr;
 		cudaMalloc(&randarr, sizeof(T) * dataview.size());
-		randArray(&randarr, 1, dataview.size(), low, upp);
+		randArray(&randarr, 1, dataview.size(), low, upp, seed);
 		cudaMemcpy2D(dataview.data(), dataview.getPitchT() * sizeof(T),
 			randarr, dataview.size(0) * sizeof(T),
 			dataview.size(0) * sizeof(T),

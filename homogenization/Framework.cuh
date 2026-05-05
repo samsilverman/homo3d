@@ -261,7 +261,7 @@ void randTri(Tensor<T> rho, cfg::HomoConfig config) {
 		cuda_error_check;
 		config.winit = cfg::InitWay::randcenter;
 	} else {
-		randArray(&coeffs, 1, nbasis, -1.f, 1.f);
+		randArray(&coeffs, 1, nbasis, -1.f, 1.f, config.randomSeed);
 	}
 
 	// write coefficient to file

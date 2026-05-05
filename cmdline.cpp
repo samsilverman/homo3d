@@ -1,5 +1,6 @@
 #include "cmdline.h"
 #include <fstream>
+#include <ctime>
 
 DEFINE_int32(reso, 64, "resolution of domain");
 DEFINE_string(obj, "bulk", "objective to be optimized: bulk, shear, npr, [customfile]");
@@ -25,6 +26,7 @@ DEFINE_double(damp, 0.5, "damp ratio for oc");
 DEFINE_double(relthres, 0.01, "relative residual threshold for FEM");
 DEFINE_bool(periodfilt, false, "use periodic filter");
 DEFINE_bool(usesym, true, "whether to use symmetrization");
+DEFINE_int64(seed, -1, "random seed for stochastic initialization; negative values fall back to current time");
 
 void cfg::HomoConfig::parse(int argc, char** argv)
 {
@@ -32,9 +34,6 @@ void cfg::HomoConfig::parse(int argc, char** argv)
 	gflags::SetUsageMessage("Homo3d option:\n");
 	gflags::ParseCommandLineFlags(&argc, &argv, false);
 	std::string  cmdline_str = gflags::CommandlineFlagsIntoString();
-
-	// write cmdline config to file
-	std::ofstream ofs(FLAGS_prefix + "cmdline"); ofs << cmdline_str; ofs.close();
 
 	// fill resolution field
 	reso[0] = reso[1] = reso[2] = FLAGS_reso;
@@ -165,6 +164,14 @@ void cfg::HomoConfig::parse(int argc, char** argv)
 	// relative residual threshold
 	femRelThres = FLAGS_relthres;
 
+	// resolve random seed once per run so all stochastic initialization is repeatable
+	randomSeed = FLAGS_seed >= 0 ? FLAGS_seed : static_cast<int64_t>(time(nullptr));
+
+	// write cmdline config to file, including the resolved seed actually used
+	std::ofstream ofs(FLAGS_prefix + "cmdline");
+	ofs << cmdline_str << "\nresolved_seed=" << randomSeed << "\n";
+	ofs.close();
+
 	// print parsed configuration
 	printf("Configuration : \n");
 	printf(" = reso  - - - - - - - - - - - - - - - - - - - - - - - %d\n", FLAGS_reso);
@@ -187,5 +194,6 @@ void cfg::HomoConfig::parse(int argc, char** argv)
 	printf(" = dampRatio     - - - - - - - - - - - - - - - - - - - %4.2f\n", float(FLAGS_damp));
 	printf(" = designStep    - - - - - - - - - - - - - - - - - - - %4.2f\n", float(FLAGS_step));
 	printf(" = femRelThres   - - - - - - - - - - - - - - - - - - - %4.2e\n", float(FLAGS_relthres));
+	printf(" = randomSeed    - - - - - - - - - - - - - - - - - - - %lld\n", static_cast<long long>(randomSeed));
 	printf(" = input(optional) - - - - - - - - - - - - - - - - - - %s\n", FLAGS_in.c_str());
 }

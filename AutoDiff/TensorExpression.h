@@ -259,9 +259,9 @@ namespace homo {
 		size_t size_elements(void) const { return buf->size_elements(); }
 		void reset(T initval = 0) { buf->reset(initval); }
 		void clear(void) { buf.reset(); }
-		void rand(T low, T upp) {
+		void rand(T low, T upp, long long seed = -1) {
 #ifdef __CUDACC__
-			tensor_rand(view(), low, upp);
+			tensor_rand(view(), low, upp, seed);
 #else
 #endif
 		}

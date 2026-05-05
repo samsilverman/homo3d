@@ -27,6 +27,7 @@ DECLARE_double(damp);
 DECLARE_double(relthres);
 DECLARE_bool(periodfilt);
 DECLARE_bool(usesym);
+DECLARE_int64(seed);
 
 
 #define b2s(boolValue) (boolValue?"Yes":"No")
@@ -49,6 +50,7 @@ namespace cfg {
 		double designStep;
 		double dampRatio;
 		double femRelThres;
+		int64_t randomSeed;
 		std::string outprefix;
 		std::string testname;
 		std::string inputrho;

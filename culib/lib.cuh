@@ -15,6 +15,7 @@
 #include "cub/cub.cuh"
 #include "warp_primitive.cuh"
 #include <memory>
+#include <ctime>
 #include "cuda/std/type_traits"
 #include "glm/glm.hpp"
 
@@ -1138,10 +1139,13 @@ namespace culib {
 	};
 
 	template<typename T>
-	void randArray(T** dst, int nArray, size_t len, T low = T{ 0 }, T upp = T{ 0 }) {
+	void randArray(T** dst, int nArray, size_t len, T low = T{ 0 }, T upp = T{ 0 }, long long seed = -1) {
 		curandGenerator_t generator;
 		curandCreateGenerator(&generator, CURAND_RNG_PSEUDO_DEFAULT);
-		curandSetPseudoRandomGeneratorSeed(generator, (int)time(nullptr));
+		unsigned long long resolvedSeed = seed >= 0 ?
+			static_cast<unsigned long long>(seed) :
+			static_cast<unsigned long long>(time(nullptr));
+		curandSetPseudoRandomGeneratorSeed(generator, resolvedSeed);
 		_randArrayGen<T>  gen;
 		gen.gen(generator, dst, nArray, len);
 		size_t grid_size, block_size;
@@ -1156,6 +1160,7 @@ namespace culib {
 			cudaDeviceSynchronize();
 			cuda_error_check;
 		}
+		curandDestroyGenerator(generator);
 	}
 
 	template<typename T>

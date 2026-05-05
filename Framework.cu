@@ -72,7 +72,7 @@ void initDensity(var_tsexp_t<>& rho, cfg::HomoConfig config) {
 	} else if (config.winit == cfg::InitWay::rep_randcenter) {
 		randTri(rho.value(), config);
 	} else if (config.winit == cfg::InitWay::noise) {
-		rho.value().rand(0.f, 1.f);
+		rho.value().rand(0.f, 1.f, config.randomSeed);
 		symmetrizeField(rho.value(), config.sym);
 		rho.value().proj(20.f, 0.5f);
 		auto view = rho.value().view();
