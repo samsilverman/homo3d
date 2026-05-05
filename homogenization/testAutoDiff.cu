@@ -1,6 +1,8 @@
 //#define _TUPLE_
 //#define __CUDACC__
 #include "Framework.cuh"
+#include "tictoc.h"
+#include <iomanip>
 
 using namespace homo;
 
