@@ -30,7 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     parser.add_argument('--res', type=int, required=True, help='Sampling grid resolution n.')
     parser.add_argument('--field', choices=sorted(DENSITY_FIELDS), default='schwarz_p', help='Density field to use.')
-    parser.add_argument('--out-dir', type=Path, default=Path(__file__), help='Output directory for saved rho.bin.')
+    parser.add_argument('--out-dir', type=Path, default=Path(__file__).resolve().parent, help='Output directory for saved rho.bin.')
     parser.add_argument('--rho-min', type=float, default=1e-10, help='Lower clamp for densities.')
     parser.add_argument('--rho-max', type=float, default=1.0, help='Upper clamp for densities.')
     parser.add_argument('--save-npy', action='store_true', help='Also save the sampled density as .npy.')
@@ -50,7 +50,7 @@ def main() -> None:
     rho = DENSITY_FIELDS[args.field](points=points)
     rho = np.clip(rho, args.rho_min, args.rho_max)
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out_dir.mkdir(parents=True, exist_ok=True)
 
     nx, ny, nz = rho.shape
     path = args.out_dir.resolve() / 'rho.bin'
@@ -65,16 +65,16 @@ def main() -> None:
         body.tofile(fid=f)
 
     if args.save_npy:
-        np.save(args.out.with_suffix('.npy'), rho)
+        np.save(path.with_suffix('.npy'), rho)
 
-    print(f'Wrote binary density: {args.out}')
+    print(f'Wrote binary density: {path}')
     print(f'Resolution: {args.res}x{args.res}x{args.res}')
     print(f'Min density: {rho.min():.6f}')
     print(f'Max density: {rho.max():.6f}')
     print(f'Average density: {rho.mean():.6f}')
     print('')
     print('Next step: Convert to VDB with the C++ tool:')
-    print(f"./density_to_vdb {args.out} {args.out.with_suffix('.vdb')}")
+    print(f"./density_to_vdb {path} {path.with_suffix('.vdb')}")
 
 
 if __name__ == "__main__":
