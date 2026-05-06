@@ -29,7 +29,7 @@ void writeTensorCsv(const std::string& filename, const double Ch[6][6]) {
 	}
 }
 
-void writeSolveTime(const std::string& filename, float totalTimeMs) {
+static void writeSolveTime(const std::string& filename, float totalTimeMs) {
 	std::ofstream ofs(filename);
 	ofs << std::fixed << std::setprecision(2);
 	ofs << "TimeMs: " << totalTimeMs << "\n";
@@ -284,7 +284,7 @@ void testHomogenization(cfg::HomoConfig config) {
 			printf(" %6.4le  %6.4le  %6.4le  %6.4le  %6.4le  %6.4le\n",
 				Ch[i][0], Ch[i][1], Ch[i][2], Ch[i][3], Ch[i][4], Ch[i][5]);
 		}
-		writeTensorCsv(getPath("Ch.csv"), Ch);
+		writeTensorCsv(getPath("C_macro.csv"), Ch);
 		writeSolveTime(getPath("runtime_ms.txt"), totalTimeMs);
 #if 0
 		double oldCh[6][6];
@@ -321,7 +321,7 @@ void testHomogenization(cfg::HomoConfig config) {
 			printf(" %6.4le  %6.4le  %6.4le  %6.4le  %6.4le  %6.4le\n",
 				Ch[i][0], Ch[i][1], Ch[i][2], Ch[i][3], Ch[i][4], Ch[i][5]);
 		}
-		writeTensorCsv(getPath("Ch.csv"), Ch);
+		writeTensorCsv(getPath("C_macro.csv"), Ch);
 		writeSolveTime(getPath("runtime_ms.txt"), totalTimeMs);
 	}
 	else if (config.testname == "backwardprofile") {

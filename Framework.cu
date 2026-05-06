@@ -17,7 +17,7 @@ void writeTensorCsv(const std::string& filename, const float* Ch) {
 	}
 }
 
-void writeSolveTime(const std::string& filename, float totalTimeMs) {
+static void writeSolveTime(const std::string& filename, float totalTimeMs) {
 	std::ofstream ofs(filename);
 	ofs << std::fixed << std::setprecision(2);
 	ofs << "TimeMs: " << totalTimeMs << "\n";
@@ -27,7 +27,7 @@ template<typename CH>
 void finalizeInverseRun(int nIter, float totalTimeMs, TensorVar<>& rho, CH& Ch) {
 	printf("Iterations: %d\n", nIter);
 	printf("Time: %.2f ms\n", totalTimeMs);
-	writeTensorCsv(getPath("Ch.csv"), Ch.data());
+	writeTensorCsv(getPath("C_macro.csv"), Ch.data());
 	writeSolveTime(getPath("runtime_ms.txt"), totalTimeMs);
 	rho.value().toVdb(getPath("rho.vdb"));
 }

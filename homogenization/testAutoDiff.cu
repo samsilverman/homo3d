@@ -86,7 +86,7 @@ void writeTensorCsvFlat(const std::string& filename, const Scalar* Ch) {
 	}
 }
 
-void writeSolveTime(const std::string& filename, float totalTimeMs) {
+static void writeSolveTime(const std::string& filename, float totalTimeMs) {
 	std::ofstream ofs(filename);
 	ofs << std::fixed << std::setprecision(2);
 	ofs << "TimeMs: " << totalTimeMs << "\n";
@@ -96,7 +96,7 @@ template<typename Scalar, typename RhoPhys>
 void finalizeInverseRun(int nIter, float totalTimeMs, var_tsexp_t<>& rho, elastic_tensor_t<Scalar, RhoPhys>& Ch) {
 	printf("Iterations: %d\n", nIter);
 	printf("Time: %.2f ms\n", totalTimeMs);
-	writeTensorCsvFlat(getPath("Ch.csv"), Ch.data());
+	writeTensorCsvFlat(getPath("C_macro.csv"), Ch.data());
 	writeSolveTime(getPath("runtime_ms.txt"), totalTimeMs);
 	rho.value().toVdb(getPath("finalRho.vdb"));
 }
