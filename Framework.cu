@@ -20,7 +20,7 @@ void writeTensorCsv(const std::string& filename, const float* Ch) {
 static void writeSolveTime(const std::string& filename, float totalTimeMs) {
 	std::ofstream ofs(filename);
 	ofs << std::fixed << std::setprecision(2);
-	ofs << "TimeMs: " << totalTimeMs << "\n";
+	ofs << totalTimeMs << "\n";
 }
 
 template<typename CH>

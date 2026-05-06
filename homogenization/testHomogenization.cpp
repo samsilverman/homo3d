@@ -32,7 +32,7 @@ void writeTensorCsv(const std::string& filename, const double Ch[6][6]) {
 static void writeSolveTime(const std::string& filename, float totalTimeMs) {
 	std::ofstream ofs(filename);
 	ofs << std::fixed << std::setprecision(2);
-	ofs << "TimeMs: " << totalTimeMs << "\n";
+	ofs << totalTimeMs << "\n";
 }
 
 int findElement(Grid& grid) {
