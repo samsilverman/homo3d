@@ -29,6 +29,12 @@ void writeTensorCsv(const std::string& filename, const double Ch[6][6]) {
 	}
 }
 
+void writeSolveTime(const std::string& filename, float totalTimeMs) {
+	std::ofstream ofs(filename);
+	ofs << std::fixed << std::setprecision(2);
+	ofs << "TimeMs: " << totalTimeMs << "\n";
+}
+
 int findElement(Grid& grid) {
 	auto eflags = grid.getCellflags();
 	int cid = grid.n_gscells() / 2;
@@ -271,13 +277,15 @@ void testHomogenization(cfg::HomoConfig config) {
 		double Ch[6][6];
 		hom.elasticMatrix(Ch);
 		auto end_time = tictoc::getTag();
-		printf("Time: %.2f ms\n", tictoc::Duration<tictoc::ms>(begin_time, end_time));
+		float totalTimeMs = tictoc::Duration<tictoc::ms>(begin_time, end_time);
+		printf("Time: %.2f ms\n", totalTimeMs);
 		printf("Ch = \n");
 		for (int i = 0; i < 6; i++) {
 			printf(" %6.4le  %6.4le  %6.4le  %6.4le  %6.4le  %6.4le\n",
 				Ch[i][0], Ch[i][1], Ch[i][2], Ch[i][3], Ch[i][4], Ch[i][5]);
 		}
 		writeTensorCsv(getPath("Ch.csv"), Ch);
+		writeSolveTime(getPath("runtime_ms.txt"), totalTimeMs);
 #if 0
 		double oldCh[6][6];
 		for (int i = 0; i < 6; i++) {
@@ -301,14 +309,20 @@ void testHomogenization(cfg::HomoConfig config) {
 			hom.getGrid()->interpDensityFromSDF(config.inputrho, VoxelIOFormat::openVDB);
 		}
 		hom.getGrid()->writeDensity(getPath("projrho"), VoxelIOFormat::openVDB);
+		auto begin_time = tictoc::getTag();
 		hom.mg_->updateStencils();
 		double Ch[6][6];
 		hom.elasticMatrix(Ch);
+		auto end_time = tictoc::getTag();
+		float totalTimeMs = tictoc::Duration<tictoc::ms>(begin_time, end_time);
+		printf("Time: %.2f ms\n", totalTimeMs);
 		printf("Ch = \n");
 		for (int i = 0; i < 6; i++) {
 			printf(" %6.4le  %6.4le  %6.4le  %6.4le  %6.4le  %6.4le\n",
 				Ch[i][0], Ch[i][1], Ch[i][2], Ch[i][3], Ch[i][4], Ch[i][5]);
 		}
+		writeTensorCsv(getPath("Ch.csv"), Ch);
+		writeSolveTime(getPath("runtime_ms.txt"), totalTimeMs);
 	}
 	else if (config.testname == "backwardprofile") {
 		Homogenization hom(config);
