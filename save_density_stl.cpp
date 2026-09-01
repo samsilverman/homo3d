@@ -19,9 +19,10 @@
  *
  * @returns Normalized normal vector.
  */
-static std::array<float, 3> computeNormal(const std::array<float, 3>& a,
-                                          const std::array<float, 3>& b,
-                                          const std::array<float, 3>& c) {
+static std::array<float, 3> computeNormal(
+    const std::array<float, 3>& a,
+    const std::array<float, 3>& b,
+    const std::array<float, 3>& c) {
     const std::array<float, 3> u = {
         b[0] - a[0],
         b[1] - a[1],
@@ -60,9 +61,10 @@ static std::array<float, 3> computeNormal(const std::array<float, 3>& a,
  *
  * @note STL file format: https://en.wikipedia.org/wiki/STL_(file_format)#Binary
  */
-static void writeBinarySTL(const std::string& path,
-                           const std::vector<std::array<float, 3>>& vertices,
-                           const std::vector<std::array<int, 3>>& triangles) {
+static void writeBinarySTL(
+    const std::string& path,
+    const std::vector<std::array<float, 3>>& vertices,
+    const std::vector<std::array<int, 3>>& triangles) {
     std::ofstream ofs(path, std::ios::binary);
     if (!ofs) {
         throw std::runtime_error("Cannot open output STL file: " + path);
