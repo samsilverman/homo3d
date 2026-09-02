@@ -11,10 +11,29 @@
 #include <filesystem>
 #include <string>
 #include <regex>
+#include <iomanip>
 
 using namespace homo;
 
 extern void cudaTest(void);
+
+void writeTensorCsv(const std::string& filename, const double Ch[6][6]) {
+	std::ofstream ofs(filename);
+	ofs << std::fixed << std::setprecision(4);
+	for (int i = 0; i < 6; ++i) {
+		for (int j = 0; j < 6; ++j) {
+			if (j != 0) ofs << ",";
+			ofs << Ch[i][j];
+		}
+		ofs << "\n";
+	}
+}
+
+static void writeSolveTime(const std::string& filename, float totalTimeMs) {
+	std::ofstream ofs(filename);
+	ofs << std::fixed << std::setprecision(2);
+	ofs << totalTimeMs << "\n";
+}
 
 int findElement(Grid& grid) {
 	auto eflags = grid.getCellflags();
@@ -35,7 +54,7 @@ int findElement(Grid& grid) {
 }
 
 void setRho(Grid& grid, int rhoid, float newval) {
-	float* p = grid.rho_g + rhoid;
+	auto* p = grid.rho_g + rhoid;
 	float newrho = newval;
 	cudaMemcpy(p, &newrho, sizeof(float), cudaMemcpyHostToDevice);
 	
@@ -108,7 +127,7 @@ void batchForwardMeasure(cfg::HomoConfig config) {
 
 			hom.logger() << "reading file " << entry.path() << std::endl;
 			hom.getGrid()->readDensity(entry.path().string(), VoxelIOFormat::openVDB);
-			double c = hom.getGrid()->projectDensityToVolume(volRatio, FLAGS_project);
+			double c = hom.getGrid()->projectDensityToVolume(volRatio, 40);
 			auto ereso = hom.getGrid()->cellReso;
 			double vol = hom.getGrid()->sumDensity() / (ereso[0] * ereso[1] * ereso[2]);
 			hom.logger() << "vol = " << vol << ", c = " << c << std::endl;
@@ -204,20 +223,14 @@ void testHomogenization(cfg::HomoConfig config) {
 	}
 	else if (config.testname == "vcycle") {
 		Homogenization hom(config);
-		//hom.getGrid()->readDensity(config.inputrho, VoxelIOFormat::openVDB);
-		hom.getGrid()->randDensity();
-		//hom.getGrid()->readDensity("temp.vdb", VoxelIOFormat::openVDB);
-		//hom.getGrid()->reset_density(0.5);
+		if(config.inputrho.empty()){
+			hom.getGrid()->randDensity();
+		} else{
+			hom.getGrid()->readDensity(config.inputrho, VoxelIOFormat::openVDB);
+		}
 		hom.mg_->updateStencils();
 		hom.getGrid()->useFchar(4);
 		hom.mg_->test_v_cycle();
-	}
-	else if (config.testname == "pcg") {
-		Homogenization hom(config);
-		hom.getGrid()->randDensity();
-		hom.mg_->updateStencils();
-		hom.getGrid()->useFchar(4);
-		hom.mg_->pcg(config.femRelThres);
 	}
 	else if (config.testname == "testgs") {
 		Homogenization hom(config);
@@ -254,19 +267,25 @@ void testHomogenization(cfg::HomoConfig config) {
 			//hom.getGrid()->reset_density(1);
 			//hom.getGrid()->readDensity(getPath("initrho"), VoxelIOFormat::openVDB);
 			hom.getGrid()->randDensity();
+			hom.getGrid()->projectDensity(20, 0.5);
 		} else {
 			hom.getGrid()->readDensity(config.inputrho, VoxelIOFormat::openVDB);
 		}
-		hom.getGrid()->projectDensity(20, 0.5);
 		hom.getGrid()->writeDensity(getPath("projrho"), VoxelIOFormat::openVDB);
+		auto begin_time = tictoc::getTag();
 		hom.mg_->updateStencils();
 		double Ch[6][6];
 		hom.elasticMatrix(Ch);
+		auto end_time = tictoc::getTag();
+		float totalTimeMs = tictoc::Duration<tictoc::ms>(begin_time, end_time);
+		printf("Time: %.2f ms\n", totalTimeMs);
 		printf("Ch = \n");
 		for (int i = 0; i < 6; i++) {
 			printf(" %6.4le  %6.4le  %6.4le  %6.4le  %6.4le  %6.4le\n",
 				Ch[i][0], Ch[i][1], Ch[i][2], Ch[i][3], Ch[i][4], Ch[i][5]);
 		}
+		writeTensorCsv(getPath("C_macro.csv"), Ch);
+		writeSolveTime(getPath("runtime_ms.txt"), totalTimeMs);
 #if 0
 		double oldCh[6][6];
 		for (int i = 0; i < 6; i++) {
@@ -290,14 +309,20 @@ void testHomogenization(cfg::HomoConfig config) {
 			hom.getGrid()->interpDensityFromSDF(config.inputrho, VoxelIOFormat::openVDB);
 		}
 		hom.getGrid()->writeDensity(getPath("projrho"), VoxelIOFormat::openVDB);
+		auto begin_time = tictoc::getTag();
 		hom.mg_->updateStencils();
 		double Ch[6][6];
 		hom.elasticMatrix(Ch);
+		auto end_time = tictoc::getTag();
+		float totalTimeMs = tictoc::Duration<tictoc::ms>(begin_time, end_time);
+		printf("Time: %.2f ms\n", totalTimeMs);
 		printf("Ch = \n");
 		for (int i = 0; i < 6; i++) {
 			printf(" %6.4le  %6.4le  %6.4le  %6.4le  %6.4le  %6.4le\n",
 				Ch[i][0], Ch[i][1], Ch[i][2], Ch[i][3], Ch[i][4], Ch[i][5]);
 		}
+		writeTensorCsv(getPath("C_macro.csv"), Ch);
+		writeSolveTime(getPath("runtime_ms.txt"), totalTimeMs);
 	}
 	else if (config.testname == "backwardprofile") {
 		Homogenization hom(config);
@@ -403,10 +428,10 @@ void testHomogenization(cfg::HomoConfig config) {
 		hom.mg_->updateStencils();
 #if 1
 		cudaProfilerStart();
-		hom.getGrid()->gs_relaxation_ex();
+		hom.getGrid()->gs_relaxation();
 		cudaProfilerStop();
 		_TIC("relxex");
-		hom.getGrid()->gs_relaxation_ex();
+		hom.getGrid()->gs_relaxation();
 		_TOC;
 		printf("relxex  time = %f ms\n", tictoc::get_record("relxex"));
 #else
@@ -502,7 +527,7 @@ void testHomogenization(cfg::HomoConfig config) {
 			grids[i]->prolongate_correction();
 		}
 		//grids[0]->v3_write(getPath("u2"), grids[0]->u_g);
-		grids[0]->v3_write(getPath("u4"), grids[0]->u_g);
+		grids[0]->v3_write(getPath("u4"), grids[0]->u_g, true);
 	}
 	else if (config.testname == "lamuset") {
 		auto lam = getKeLam72();
@@ -663,4 +688,3 @@ void testHomogenization(cfg::HomoConfig config) {
 	freeMem();
 	exit(0);
 }
-
