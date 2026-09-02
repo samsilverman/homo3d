@@ -141,3 +141,7 @@ target_link_libraries(homo3d PRIVATE ${CUDA_cusolver_LIBRARY})
 target_link_libraries(homo3d PRIVATE ${CUDA_cusparse_LIBRARY})
 target_link_libraries(homo3d PRIVATE ${CUDA_CUBLAS_LIBRARIES})
 target_link_libraries(homo3d PRIVATE ${GFLAGS_LIBRARIES})
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_libraries(homo3d PRIVATE stdc++fs)
+endif()
