@@ -17,13 +17,18 @@ using namespace homo;
 
 extern void cudaTest(void);
 
+// homo3d indexes the macro strain cases as (11, 22, 33, 23, 13, 12), while we
+// write the tensor as (11, 22, 33, 12, 13, 23), so the shear rows and columns
+// 3 and 5 are swapped on the way out
+static const int voigtOrder[6] = { 0, 1, 2, 5, 4, 3 };
+
 void writeTensorCsv(const std::string& filename, const double Ch[6][6]) {
 	std::ofstream ofs(filename);
 	ofs << std::fixed << std::setprecision(4);
 	for (int i = 0; i < 6; ++i) {
 		for (int j = 0; j < 6; ++j) {
 			if (j != 0) ofs << ",";
-			ofs << Ch[i][j];
+			ofs << Ch[voigtOrder[i]][voigtOrder[j]];
 		}
 		ofs << "\n";
 	}
