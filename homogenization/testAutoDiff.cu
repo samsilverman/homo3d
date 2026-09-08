@@ -73,6 +73,11 @@ void logIter(int iter, cfg::HomoConfig config, var_tsexp_t<>& rho, Tensor<Scalar
 	}
 }
 
+// homo3d indexes the macro strain cases as (11, 22, 33, 23, 13, 12), while we
+// write the tensor as (11, 22, 33, 12, 13, 23), so the shear rows and columns
+// 3 and 5 are swapped on the way out
+static const int voigtOrder[6] = { 0, 1, 2, 5, 4, 3 };
+
 template<typename Scalar>
 void writeTensorCsvFlat(const std::string& filename, const Scalar* Ch) {
 	std::ofstream ofs(filename);
@@ -80,7 +85,7 @@ void writeTensorCsvFlat(const std::string& filename, const Scalar* Ch) {
 	for (int i = 0; i < 6; ++i) {
 		for (int j = 0; j < 6; ++j) {
 			if (j != 0) ofs << ",";
-			ofs << Ch[i * 6 + j];
+			ofs << Ch[voigtOrder[i] * 6 + voigtOrder[j]];
 		}
 		ofs << "\n";
 	}
